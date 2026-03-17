@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess PGN Coach</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="card">
+        <h1>Chess PGN Coach</h1>
+        <p class="subtitle">Paste one or multiple PGNs. Stockfish runs server-side through MCP, and the coaching report is generated in the browser using the user&apos;s own OpenAI API key.</p>
+
+        <label for="apiKey">OpenAI API Key</label>
+        <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+        <p class="helper">Stored only in this browser via local storage. The key is sent directly to OpenAI from your device.</p>
+
+        <label for="model">Model</label>
+        <input id="model" type="text" value="__OPENAI_MODEL__" autocomplete="off" />
+
+        <label for="pgn">PGN</label>
+        <textarea id="pgn" placeholder="Paste PGN here"></textarea>
+
+        <div class="actions">
+          <button id="analyzeBtn">Analyze PGN(s)</button>
+          <button id="clearKeyBtn" type="button" class="secondary">Clear Saved Key</button>
+        </div>
+        <div id="gamePickerWrap" hidden>
+          <label for="gamePicker">Selected Game</label>
+          <select id="gamePicker"></select>
+        </div>
+        <p id="status" class="status"></p>
+      </section>
+
+      <section class="card" id="boardCard" hidden>
+        <h2>Game Replay</h2>
+        <div class="board-wrap">
+          <chess-board id="board"></chess-board>
+        </div>
+        <p id="boardError" class="status"></p>
+        <div class="replay-controls">
+          <button id="startBtn" type="button">Start</button>
+          <button id="prevBtn" type="button">Prev</button>
+          <button id="playBtn" type="button">Play</button>
+          <button id="nextBtn" type="button">Next</button>
+          <span id="plyLabel">Ply 0</span>
+        </div>
+      </section>
+
+      <section class="card" id="resultsCard" hidden>
+        <h2>Coaching Report</h2>
+        <article id="report" class="report"></article>
+
+        <h3>Top Engine-Detected Mistakes</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ply</th>
+                <th>Mover</th>
+                <th>Played</th>
+                <th>Best</th>
+                <th>Loss (cp)</th>
+              </tr>
+            </thead>
+            <tbody id="mistakesBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/chess.js@1.4.0/dist/chess.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/chessboard-element@1.4.8/dist/chess-board-element.min.js"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

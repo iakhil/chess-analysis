@@ -1,0 +1,6 @@
+fastapi>=0.110,<1
+uvicorn[standard]>=0.29,<1
+python-multipart>=0.0.9,<1
+python-chess>=1.999,<2
+openai>=1.0.0,<2
+python-dotenv>=1.0.0,<2

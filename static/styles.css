@@ -1,0 +1,168 @@
+:root {
+  --bg: #f5f2ea;
+  --ink: #1f2933;
+  --muted: #5d6a73;
+  --panel: #fffdf8;
+  --border: #d9cfbf;
+  --accent: #19647e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--ink);
+  background: radial-gradient(circle at 10% 10%, #fff9e7 0, var(--bg) 45%, #ece5d8 100%);
+}
+
+.shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+  display: grid;
+  gap: 20px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(20, 20, 20, 0.06);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  margin-top: 0;
+  color: var(--muted);
+}
+
+label {
+  display: block;
+  margin: 14px 0 8px;
+  font-weight: 700;
+}
+
+select {
+  width: 100%;
+  max-width: 560px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+input {
+  width: 100%;
+  max-width: 560px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+}
+
+textarea {
+  width: 100%;
+  min-height: 240px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 14px;
+  resize: vertical;
+}
+
+button {
+  margin-top: 12px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.secondary {
+  background: transparent;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.helper {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.status {
+  min-height: 20px;
+  color: var(--muted);
+}
+
+.report {
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+.board-wrap {
+  max-width: 520px;
+}
+
+chess-board {
+  width: min(100%, 520px);
+}
+
+.replay-controls {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 14px;
+  }
+
+  textarea {
+    min-height: 180px;
+  }
+}
