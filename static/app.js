@@ -1,9 +1,8 @@
-const OPENAI_API_URL = "https://api.openai.com/v1/responses";
 const API_KEY_STORAGE_KEY = "chess-pgn-coach-openai-key";
-const MODEL_STORAGE_KEY = "chess-pgn-coach-openai-model";
+const PLAYED_AS_STORAGE_KEY = "chess-pgn-coach-played-as";
 
 const apiKeyEl = document.getElementById("apiKey");
-const modelEl = document.getElementById("model");
+const playedAsEl = document.getElementById("playedAs");
 const clearKeyBtn = document.getElementById("clearKeyBtn");
 const pgnEl = document.getElementById("pgn");
 const analyzeBtn = document.getElementById("analyzeBtn");
@@ -15,8 +14,8 @@ const boardEl = document.getElementById("board");
 const boardErrorEl = document.getElementById("boardError");
 const startBtn = document.getElementById("startBtn");
 const prevBtn = document.getElementById("prevBtn");
-const playBtn = document.getElementById("playBtn");
 const nextBtn = document.getElementById("nextBtn");
+const endBtn = document.getElementById("endBtn");
 const plyLabel = document.getElementById("plyLabel");
 const resultsCard = document.getElementById("resultsCard");
 const reportEl = document.getElementById("report");
@@ -24,7 +23,6 @@ const mistakesBody = document.getElementById("mistakesBody");
 
 let replayFens = ["start"];
 let replayIndex = 0;
-let autoplayTimer = null;
 let analyzedGames = [];
 let selectedGameIndex = 0;
 
@@ -32,12 +30,12 @@ hydrateSavedSettings();
 
 function hydrateSavedSettings() {
   const savedKey = window.localStorage.getItem(API_KEY_STORAGE_KEY);
-  const savedModel = window.localStorage.getItem(MODEL_STORAGE_KEY);
+  const savedPlayedAs = window.localStorage.getItem(PLAYED_AS_STORAGE_KEY);
   if (savedKey && apiKeyEl) {
     apiKeyEl.value = savedKey;
   }
-  if (savedModel && modelEl) {
-    modelEl.value = savedModel;
+  if (savedPlayedAs && playedAsEl) {
+    playedAsEl.value = savedPlayedAs;
   }
 }
 
@@ -46,16 +44,6 @@ function esc(s) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-}
-
-function stopAutoplay() {
-  if (autoplayTimer) {
-    clearInterval(autoplayTimer);
-    autoplayTimer = null;
-  }
-  if (playBtn) {
-    playBtn.textContent = "Play";
-  }
 }
 
 function setBoardPosition(fen) {
@@ -143,52 +131,26 @@ function extractJsonObject(text) {
   return JSON.parse(candidate);
 }
 
-function buildPrompt(game) {
-  return [
-    "You are a practical chess coach.",
-    "You are given Stockfish-based analysis from the server and should use it heavily.",
-    "Return JSON only.",
-    "Base your coaching primarily on the engine findings, emphasizing recurring patterns and actionable fixes.",
-    'Return this shape exactly: {"report":"string","coachNotes":[{"ply":number|null,"mover":"White|Black|Unknown","played":"string","theme":"string","explanation":"string"}]}',
-    "The report should be markdown with sections: Overview, Key Mistakes, Themes, Practice Plan.",
-    "coachNotes should contain at most 8 concrete moments grounded in the analysis.top_mistakes or analysis.all_reviews data.",
-    "",
-    "Engine analysis JSON:",
-    JSON.stringify(game.analysis, null, 2),
-  ].join("\n");
-}
-
-async function generateCoachingReport(game, apiKey, model) {
-  const response = await fetch(OPENAI_API_URL, {
+async function generateCoachingReport(game, apiKey, playedAs) {
+  const response = await fetch("/api/report", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
-      input: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "input_text",
-              text: buildPrompt(game),
-            },
-          ],
-        },
-      ],
-      temperature: 0.3,
+      analysis: game.analysis,
+      api_key: apiKey,
+      played_as: playedAs,
     }),
   });
 
   const data = await response.json();
   if (!response.ok) {
-    const message = data?.error?.message || "OpenAI request failed.";
+    const message = data?.detail || "OpenAI request failed.";
     throw new Error(message);
   }
 
-  const parsed = extractJsonObject(data.output_text);
+  const parsed = extractJsonObject(data.output_text || "");
   return {
     report: typeof parsed.report === "string" ? parsed.report.trim() : "No report returned.",
     coachNotes: Array.isArray(parsed.coachNotes) ? parsed.coachNotes : [],
@@ -200,8 +162,8 @@ function setWorkingState(isWorking) {
   if (apiKeyEl) {
     apiKeyEl.disabled = isWorking;
   }
-  if (modelEl) {
-    modelEl.disabled = isWorking;
+  if (playedAsEl) {
+    playedAsEl.disabled = isWorking;
   }
   if (clearKeyBtn) {
     clearKeyBtn.disabled = isWorking;
@@ -209,61 +171,54 @@ function setWorkingState(isWorking) {
 }
 
 startBtn?.addEventListener("click", () => {
-  stopAutoplay();
   replayIndex = 0;
   renderReplay();
 });
 
 prevBtn?.addEventListener("click", () => {
-  stopAutoplay();
   replayIndex = Math.max(0, replayIndex - 1);
   renderReplay();
 });
 
 nextBtn?.addEventListener("click", () => {
-  stopAutoplay();
   replayIndex = Math.min(replayFens.length - 1, replayIndex + 1);
   renderReplay();
 });
 
-playBtn?.addEventListener("click", () => {
-  if (autoplayTimer) {
-    stopAutoplay();
-    return;
-  }
-  playBtn.textContent = "Pause";
-  autoplayTimer = setInterval(() => {
-    if (replayIndex >= replayFens.length - 1) {
-      stopAutoplay();
-      return;
-    }
-    replayIndex += 1;
-    renderReplay();
-  }, 700);
+endBtn?.addEventListener("click", () => {
+  replayIndex = Math.max(0, replayFens.length - 1);
+  renderReplay();
 });
 
 gamePicker?.addEventListener("change", () => {
-  stopAutoplay();
   selectedGameIndex = Number(gamePicker.value) || 0;
   renderCurrentGame();
 });
 
 clearKeyBtn?.addEventListener("click", () => {
   window.localStorage.removeItem(API_KEY_STORAGE_KEY);
+  window.localStorage.removeItem(PLAYED_AS_STORAGE_KEY);
   if (apiKeyEl) {
     apiKeyEl.value = "";
     apiKeyEl.focus();
   }
-  statusEl.textContent = "Saved API key cleared from this browser.";
+  if (playedAsEl) {
+    playedAsEl.value = "White";
+  }
+  statusEl.textContent = "Saved API key and side preference cleared from this browser.";
 });
 
 analyzeBtn.addEventListener("click", async () => {
   const apiKey = apiKeyEl?.value.trim() || "";
-  const model = modelEl?.value.trim() || "gpt-4.1-mini";
+  const playedAs = playedAsEl?.value || "";
   const pgn = pgnEl.value.trim();
 
   if (!apiKey) {
     statusEl.textContent = "Enter an OpenAI API key first.";
+    return;
+  }
+  if (!playedAs) {
+    statusEl.textContent = "Choose whether you played as White or Black.";
     return;
   }
   if (!pgn) {
@@ -272,7 +227,6 @@ analyzeBtn.addEventListener("click", async () => {
   }
 
   setWorkingState(true);
-  stopAutoplay();
   if (boardErrorEl) {
     boardErrorEl.textContent = "";
   }
@@ -306,13 +260,13 @@ analyzeBtn.addEventListener("click", async () => {
     }
 
     window.localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
-    window.localStorage.setItem(MODEL_STORAGE_KEY, model);
+    window.localStorage.setItem(PLAYED_AS_STORAGE_KEY, playedAs);
 
-    statusEl.textContent = `Stockfish analysis complete. Generating coaching with ${model}...`;
+    statusEl.textContent = `Stockfish analysis complete. Generating coaching for ${playedAs}...`;
 
     for (let idx = 0; idx < analyzedGames.length; idx += 1) {
-      statusEl.textContent = `Generating coaching for game ${idx + 1} of ${analyzedGames.length} with ${model}...`;
-      const result = await generateCoachingReport(analyzedGames[idx], apiKey, model);
+      statusEl.textContent = `Generating coaching for game ${idx + 1} of ${analyzedGames.length} from ${playedAs}'s perspective...`;
+      const result = await generateCoachingReport(analyzedGames[idx], apiKey, playedAs);
       analyzedGames[idx].report = result.report;
       analyzedGames[idx].coachNotes = result.coachNotes;
     }

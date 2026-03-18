@@ -141,6 +141,14 @@ chess-board {
   flex-wrap: wrap;
 }
 
+.arrow-btn {
+  min-width: 56px;
+  padding: 10px 0;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+}
+
 .table-wrap {
   overflow-x: auto;
 }

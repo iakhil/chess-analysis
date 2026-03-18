@@ -1,12 +1,12 @@
 # Chess PGN Coach
 
-A FastAPI web app that runs Stockfish analysis on the server via MCP and generates the coaching report in the browser using the user's own OpenAI API key.
+A FastAPI web app that runs Stockfish analysis on the server via MCP and generates the coaching report through the backend using the user's own OpenAI API key.
 
 ## How it works
 
 - The browser sends pasted PGNs to the FastAPI backend.
-- The backend runs `mcp-stockfish` and returns engine analysis JSON only.
-- The browser sends that analysis to OpenAI with the user's API key and renders the coaching report locally.
+- The backend runs `mcp-stockfish` and returns engine analysis JSON.
+- The browser sends that analysis plus the user's API key and chosen side to the backend, which calls OpenAI for that request only and returns the coaching report.
 - Replay is rendered in the browser with `chessboard-element`.
 
 ## Run locally
@@ -22,7 +22,7 @@ Open `http://localhost:8000`.
 
 ## Configuration
 
-- `OPENAI_MODEL`: default model prefilled in the UI, default `gpt-4.1-mini`
+- `OPENAI_MODEL`: model used server-side for report generation, default `gpt-4.1-mini`
 - `MCP_STOCKFISH_CMD`: command used to start the MCP Stockfish process
 - `MCP_ANALYSIS_MODE`: `movetime` or `depth`
 - `MCP_ANALYSIS_MOVETIME_MS`: default `300` in `movetime` mode
@@ -33,7 +33,8 @@ Open `http://localhost:8000`.
 
 ## Notes
 
-- No server-side OpenAI key is required or used.
-- The user's OpenAI API key is entered on the page and stored in browser local storage only.
+- No server-side OpenAI key is required.
+- The user's OpenAI API key is entered on the page, stored in browser local storage, and sent to the backend only for the report-generation request. The app does not persist it in `.env`.
+- The user explicitly chooses whether they played as White or Black so the coaching is from the correct perspective.
 - The engine mistakes table is based on Stockfish/MCP analysis from the backend.
 - The interactive board uses CDN scripts (`chess.js` and `chessboard-element`).

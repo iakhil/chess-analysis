@@ -2,9 +2,11 @@ import io
 import logging
 import os
 import re
+import shlex
 import time
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import chess.pgn
@@ -14,6 +16,16 @@ from .mcp_client import MCPStockfishClient
 
 MATE_SCORE = 100000
 logger = logging.getLogger(__name__)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def _default_mcp_command() -> str:
+    binary = BASE_DIR / "bin" / "mcp-stockfish-persistent"
+    stockfish_path = os.getenv("MCP_STOCKFISH_PATH", "").strip()
+    binary_cmd = shlex.quote(str(binary))
+    if stockfish_path:
+        return f"MCP_STOCKFISH_PATH={shlex.quote(stockfish_path)} {binary_cmd}"
+    return binary_cmd
 
 
 @dataclass
@@ -78,7 +90,7 @@ async def _analyze_game(game: chess.pgn.Game, game_index: int) -> dict[str, Any]
     depth = int(os.getenv("MCP_ANALYSIS_DEPTH", "12"))
     movetime_ms = int(os.getenv("MCP_ANALYSIS_MOVETIME_MS", "300"))
     max_plies = int(os.getenv("MCP_ANALYSIS_MAX_PLIES", "120"))
-    mcp_cmd = os.getenv("MCP_STOCKFISH_CMD", "mcp-stockfish")
+    mcp_cmd = os.getenv("MCP_STOCKFISH_CMD", "").strip() or _default_mcp_command()
 
     moves = list(game.mainline_moves())[:max_plies]
     logger.info(
