@@ -1,5 +1,6 @@
 const API_KEY_STORAGE_KEY = "chess-pgn-coach-openai-key";
 const PLAYED_AS_STORAGE_KEY = "chess-pgn-coach-played-as";
+const LAST_ANALYSIS_STORAGE_KEY = "chess-pgn-coach-last-analysis";
 
 const apiKeyEl = document.getElementById("apiKey");
 const playedAsEl = document.getElementById("playedAs");
@@ -27,6 +28,7 @@ let analyzedGames = [];
 let selectedGameIndex = 0;
 
 hydrateSavedSettings();
+restoreLastAnalysis();
 
 function hydrateSavedSettings() {
   const savedKey = window.localStorage.getItem(API_KEY_STORAGE_KEY);
@@ -36,6 +38,67 @@ function hydrateSavedSettings() {
   }
   if (savedPlayedAs && playedAsEl) {
     playedAsEl.value = savedPlayedAs;
+  }
+}
+
+function persistLastAnalysis() {
+  if (!analyzedGames.length) {
+    window.localStorage.removeItem(LAST_ANALYSIS_STORAGE_KEY);
+    return;
+  }
+
+  const payload = {
+    pgn: pgnEl?.value || "",
+    playedAs: playedAsEl?.value || "White",
+    analyzedGames,
+    selectedGameIndex,
+    replayIndex,
+  };
+  window.localStorage.setItem(LAST_ANALYSIS_STORAGE_KEY, JSON.stringify(payload));
+}
+
+function populateGamePicker() {
+  if (!gamePicker || !gamePickerWrap) {
+    return;
+  }
+  gamePicker.innerHTML = analyzedGames
+    .map((game, idx) => `<option value="${idx}">${esc(game.title || `Game ${idx + 1}`)}</option>`)
+    .join("");
+  gamePicker.value = String(selectedGameIndex);
+  gamePickerWrap.hidden = analyzedGames.length <= 1;
+}
+
+function restoreLastAnalysis() {
+  const raw = window.localStorage.getItem(LAST_ANALYSIS_STORAGE_KEY);
+  if (!raw) {
+    return;
+  }
+
+  try {
+    const saved = JSON.parse(raw);
+    if (!Array.isArray(saved.analyzedGames) || !saved.analyzedGames.length) {
+      window.localStorage.removeItem(LAST_ANALYSIS_STORAGE_KEY);
+      return;
+    }
+
+    if (pgnEl && typeof saved.pgn === "string") {
+      pgnEl.value = saved.pgn;
+    }
+    if (playedAsEl && (saved.playedAs === "White" || saved.playedAs === "Black")) {
+      playedAsEl.value = saved.playedAs;
+    }
+
+    analyzedGames = saved.analyzedGames;
+    selectedGameIndex = Math.max(0, Math.min(Number(saved.selectedGameIndex) || 0, analyzedGames.length - 1));
+    populateGamePicker();
+    boardCard.hidden = false;
+    resultsCard.hidden = false;
+    renderCurrentGame();
+    replayIndex = Math.max(0, Math.min(Number(saved.replayIndex) || 0, replayFens.length - 1));
+    renderReplay();
+    statusEl.textContent = "Restored the last analyzed game from this browser.";
+  } catch (_err) {
+    window.localStorage.removeItem(LAST_ANALYSIS_STORAGE_KEY);
   }
 }
 
@@ -197,6 +260,9 @@ function renderCurrentGame() {
     )
     .join("");
   mistakesBody.innerHTML = rows || `<tr><td colspan="5">No major mistakes detected.</td></tr>`;
+  if (gamePicker) {
+    gamePicker.value = String(selectedGameIndex);
+  }
 }
 
 function extractJsonObject(text) {
@@ -252,26 +318,31 @@ function setWorkingState(isWorking) {
 startBtn?.addEventListener("click", () => {
   replayIndex = 0;
   renderReplay();
+  persistLastAnalysis();
 });
 
 prevBtn?.addEventListener("click", () => {
   replayIndex = Math.max(0, replayIndex - 1);
   renderReplay();
+  persistLastAnalysis();
 });
 
 nextBtn?.addEventListener("click", () => {
   replayIndex = Math.min(replayFens.length - 1, replayIndex + 1);
   renderReplay();
+  persistLastAnalysis();
 });
 
 endBtn?.addEventListener("click", () => {
   replayIndex = Math.max(0, replayFens.length - 1);
   renderReplay();
+  persistLastAnalysis();
 });
 
 gamePicker?.addEventListener("change", () => {
   selectedGameIndex = Number(gamePicker.value) || 0;
   renderCurrentGame();
+  persistLastAnalysis();
 });
 
 clearKeyBtn?.addEventListener("click", () => {
@@ -350,17 +421,12 @@ analyzeBtn.addEventListener("click", async () => {
       analyzedGames[idx].coachNotes = result.coachNotes;
     }
 
-    if (gamePicker && gamePickerWrap) {
-      gamePicker.innerHTML = analyzedGames
-        .map((game, idx) => `<option value="${idx}">${esc(game.title || `Game ${idx + 1}`)}</option>`)
-        .join("");
-      gamePickerWrap.hidden = analyzedGames.length <= 1;
-    }
-
     boardCard.hidden = false;
     selectedGameIndex = 0;
+    populateGamePicker();
     renderCurrentGame();
     resultsCard.hidden = false;
+    persistLastAnalysis();
     statusEl.textContent = `Done. Stockfish ran on the server and coaching used the browser-supplied API key.`;
   } catch (err) {
     statusEl.textContent = `Error: ${err.message}`;

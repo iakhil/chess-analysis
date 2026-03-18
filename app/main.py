@@ -37,9 +37,21 @@ class ReportRequest(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
-def index() -> str:
+def index() -> HTMLResponse:
     html_path = BASE_DIR / "templates" / "index.html"
-    return html_path.read_text(encoding="utf-8")
+    styles_path = BASE_DIR / "static" / "styles.css"
+    app_js_path = BASE_DIR / "static" / "app.js"
+    html = html_path.read_text(encoding="utf-8")
+    html = html.replace("__STYLES_VERSION__", str(int(styles_path.stat().st_mtime)))
+    html = html.replace("__APP_VERSION__", str(int(app_js_path.stat().st_mtime)))
+    return HTMLResponse(
+        content=html,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+        },
+    )
 
 
 @app.post("/api/analyze")
