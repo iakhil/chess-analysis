@@ -121,8 +121,43 @@ button:disabled {
 }
 
 .report {
-  white-space: pre-wrap;
   line-height: 1.45;
+}
+
+.report h1,
+.report h2,
+.report h3,
+.report h4 {
+  margin: 18px 0 10px;
+}
+
+.report h1:first-child,
+.report h2:first-child,
+.report h3:first-child,
+.report h4:first-child {
+  margin-top: 0;
+}
+
+.report p,
+.report ul,
+.report ol {
+  margin: 0 0 14px;
+}
+
+.report ul,
+.report ol {
+  padding-left: 24px;
+}
+
+.report li {
+  margin-bottom: 6px;
+}
+
+.report code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: #efe8da;
+  font-size: 0.95em;
 }
 
 .board-wrap {

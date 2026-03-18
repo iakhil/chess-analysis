@@ -46,6 +46,85 @@ function esc(s) {
     .replace(/>/g, "&gt;");
 }
 
+function renderInlineMarkdown(text) {
+  return esc(text)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*([^*]+)\*/g, "<em>$1</em>");
+}
+
+function renderMarkdown(markdown) {
+  const lines = String(markdown || "").replace(/\r\n/g, "\n").split("\n");
+  const html = [];
+  let paragraph = [];
+  let listType = null;
+
+  function flushParagraph() {
+    if (!paragraph.length) {
+      return;
+    }
+    html.push(`<p>${renderInlineMarkdown(paragraph.join(" "))}</p>`);
+    paragraph = [];
+  }
+
+  function closeList() {
+    if (!listType) {
+      return;
+    }
+    html.push(listType === "ol" ? "</ol>" : "</ul>");
+    listType = null;
+  }
+
+  lines.forEach((rawLine) => {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      closeList();
+      return;
+    }
+
+    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
+    if (headingMatch) {
+      flushParagraph();
+      closeList();
+      const level = headingMatch[1].length;
+      html.push(`<h${level}>${renderInlineMarkdown(headingMatch[2])}</h${level}>`);
+      return;
+    }
+
+    const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
+    if (orderedMatch) {
+      flushParagraph();
+      if (listType !== "ol") {
+        closeList();
+        html.push("<ol>");
+        listType = "ol";
+      }
+      html.push(`<li>${renderInlineMarkdown(orderedMatch[1])}</li>`);
+      return;
+    }
+
+    const unorderedMatch = line.match(/^[-*]\s+(.*)$/);
+    if (unorderedMatch) {
+      flushParagraph();
+      if (listType !== "ul") {
+        closeList();
+        html.push("<ul>");
+        listType = "ul";
+      }
+      html.push(`<li>${renderInlineMarkdown(unorderedMatch[1])}</li>`);
+      return;
+    }
+
+    closeList();
+    paragraph.push(line);
+  });
+
+  flushParagraph();
+  closeList();
+  return html.join("");
+}
+
 function setBoardPosition(fen) {
   if (!boardEl) {
     return;
@@ -99,7 +178,7 @@ function renderCurrentGame() {
     return;
   }
 
-  reportEl.textContent = game.report || "No report generated.";
+  reportEl.innerHTML = renderMarkdown(game.report || "No report generated.");
   if (boardErrorEl) {
     boardErrorEl.textContent = "";
   }
