@@ -4,17 +4,28 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chess PGN Coach</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/styles.css?v=__STYLES_VERSION__" />
   </head>
   <body>
     <main class="shell">
       <section class="card">
-        <h1>Chess PGN Coach</h1>
-        <p class="subtitle">Paste one or multiple PGNs. Stockfish runs server-side through MCP, and the coaching report is generated in the browser using the user&apos;s own OpenAI API key.</p>
+        <span class="eyebrow">Engine + Coach</span>
+        <h1>Ivory Castle</h1>
+        <h2 class="subtitle">Recaps your games, isolates your patterns, and turns engine analysis into practical coaching.</h2>
 
-        <label for="apiKey">OpenAI API Key</label>
-        <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
-        <p class="helper">Stored only in this browser via local storage. The key is sent to this app's backend only for report generation.</p>
+        <details id="apiKeyPanel" class="disclosure">
+          <summary class="disclosure-summary">
+            <span class="disclosure-title">OpenAI API Key</span>
+            <span id="apiKeySummary" class="disclosure-value">Not added</span>
+          </summary>
+          <div class="disclosure-body">
+            <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+            <p class="helper">Your key stays in this browser and is only used to generate your coaching report.</p>
+          </div>
+        </details>
 
         <label for="playedAs">You Played As</label>
         <select id="playedAs">
@@ -34,6 +45,14 @@
           <select id="gamePicker"></select>
         </div>
         <p id="status" class="status"></p>
+        <div id="analysisPulse" class="analysis-pulse" hidden aria-live="polite">
+          <div class="analysis-row">
+            <span class="piece piece-1">&#9816;</span>
+            <span class="piece piece-2">&#9815;</span>
+            <span class="piece piece-3">&#9813;</span>
+          </div>
+          <p id="analysisMessage" class="analysis-message">Consulting the engine room...</p>
+        </div>
       </section>
 
       <section class="card" id="boardCard" hidden>

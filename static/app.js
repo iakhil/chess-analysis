@@ -2,12 +2,16 @@ const API_KEY_STORAGE_KEY = "chess-pgn-coach-openai-key";
 const PLAYED_AS_STORAGE_KEY = "chess-pgn-coach-played-as";
 const LAST_ANALYSIS_STORAGE_KEY = "chess-pgn-coach-last-analysis";
 
+const apiKeyPanelEl = document.getElementById("apiKeyPanel");
 const apiKeyEl = document.getElementById("apiKey");
+const apiKeySummaryEl = document.getElementById("apiKeySummary");
 const playedAsEl = document.getElementById("playedAs");
 const clearKeyBtn = document.getElementById("clearKeyBtn");
 const pgnEl = document.getElementById("pgn");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const statusEl = document.getElementById("status");
+const analysisPulseEl = document.getElementById("analysisPulse");
+const analysisMessageEl = document.getElementById("analysisMessage");
 const gamePickerWrap = document.getElementById("gamePickerWrap");
 const gamePicker = document.getElementById("gamePicker");
 const boardCard = document.getElementById("boardCard");
@@ -39,6 +43,17 @@ function hydrateSavedSettings() {
   if (savedPlayedAs && playedAsEl) {
     playedAsEl.value = savedPlayedAs;
   }
+  updateApiKeySummary();
+}
+
+function updateApiKeySummary() {
+  if (!apiKeySummaryEl || !apiKeyPanelEl) {
+    return;
+  }
+  const value = apiKeyEl?.value.trim() || "";
+  const hasKey = Boolean(value);
+  apiKeySummaryEl.textContent = hasKey ? "Saved in this browser" : "Not added";
+  apiKeyPanelEl.open = !hasKey;
 }
 
 function persistLastAnalysis() {
@@ -313,6 +328,15 @@ function setWorkingState(isWorking) {
   if (clearKeyBtn) {
     clearKeyBtn.disabled = isWorking;
   }
+  if (analysisPulseEl) {
+    analysisPulseEl.hidden = !isWorking;
+  }
+}
+
+function setAnalysisMessage(message) {
+  if (analysisMessageEl) {
+    analysisMessageEl.textContent = message;
+  }
 }
 
 startBtn?.addEventListener("click", () => {
@@ -355,7 +379,12 @@ clearKeyBtn?.addEventListener("click", () => {
   if (playedAsEl) {
     playedAsEl.value = "White";
   }
+  updateApiKeySummary();
   statusEl.textContent = "Saved API key and side preference cleared from this browser.";
+});
+
+apiKeyEl?.addEventListener("input", () => {
+  updateApiKeySummary();
 });
 
 analyzeBtn.addEventListener("click", async () => {
@@ -377,6 +406,7 @@ analyzeBtn.addEventListener("click", async () => {
   }
 
   setWorkingState(true);
+  setAnalysisMessage("Lining up the pieces...");
   if (boardErrorEl) {
     boardErrorEl.textContent = "";
   }
@@ -399,6 +429,7 @@ analyzeBtn.addEventListener("click", async () => {
       throw new Error(data.detail || "Analysis request failed.");
     }
 
+    setAnalysisMessage("Stockfish is probing every sharp turn...");
     analyzedGames = (data.games || []).map((game) => ({
       ...game,
       report: "",
@@ -411,11 +442,14 @@ analyzeBtn.addEventListener("click", async () => {
 
     window.localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
     window.localStorage.setItem(PLAYED_AS_STORAGE_KEY, playedAs);
+    updateApiKeySummary();
 
     statusEl.textContent = `Stockfish analysis complete. Generating coaching for ${playedAs}...`;
+    setAnalysisMessage("Stockfish is walking the game tree...");
 
     for (let idx = 0; idx < analyzedGames.length; idx += 1) {
       statusEl.textContent = `Generating coaching for game ${idx + 1} of ${analyzedGames.length} from ${playedAs}'s perspective...`;
+      setAnalysisMessage(`Writing your coaching notes for game ${idx + 1} of ${analyzedGames.length}...`);
       const result = await generateCoachingReport(analyzedGames[idx], apiKey, playedAs);
       analyzedGames[idx].report = result.report;
       analyzedGames[idx].coachNotes = result.coachNotes;
@@ -431,6 +465,7 @@ analyzeBtn.addEventListener("click", async () => {
   } catch (err) {
     statusEl.textContent = `Error: ${err.message}`;
   } finally {
+    setAnalysisMessage("Consulting the engine room...");
     setWorkingState(false);
   }
 });
