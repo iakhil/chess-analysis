@@ -441,3 +441,24 @@ tbody tr:hover {
     min-height: 180px;
   }
 }
+
+@media (min-width: 980px) {
+  .shell {
+    grid-template-columns: minmax(360px, 520px) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .shell > .card:first-child {
+    grid-column: 1 / -1;
+  }
+
+  #boardCard {
+    grid-column: 1;
+    position: sticky;
+    top: 24px;
+  }
+
+  #resultsCard {
+    grid-column: 2;
+  }
+}
