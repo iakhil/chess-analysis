@@ -15,17 +15,7 @@
         <span class="eyebrow">Engine + Coach</span>
         <h1>Ivory Castle</h1>
         <h2 class="subtitle">Recaps your games, isolates your patterns, and turns engine analysis into practical coaching.</h2>
-
-        <details id="apiKeyPanel" class="disclosure">
-          <summary class="disclosure-summary">
-            <span class="disclosure-title">OpenAI API Key</span>
-            <span id="apiKeySummary" class="disclosure-value">Not added</span>
-          </summary>
-          <div class="disclosure-body">
-            <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
-            <p class="helper">Your key stays in this browser and is only used to generate your coaching report.</p>
-          </div>
-        </details>
+        <p class="helper">Coaching reports are generated securely on the server.</p>
 
         <label for="playedAs">You Played As</label>
         <select id="playedAs">
@@ -38,7 +28,7 @@
 
         <div class="actions">
           <button id="analyzeBtn">Analyze PGN(s)</button>
-          <button id="clearKeyBtn" type="button" class="secondary">Clear Saved Key</button>
+          <button id="clearKeyBtn" type="button" class="secondary">Clear Saved Session</button>
         </div>
         <div id="gamePickerWrap" hidden>
           <label for="gamePicker">Selected Game</label>

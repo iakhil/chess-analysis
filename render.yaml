@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: ivory-castle
+    runtime: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: APP_LOG_LEVEL
+        value: INFO
+      - key: MCP_ANALYSIS_MODE
+        value: movetime
+      - key: MCP_ANALYSIS_MOVETIME_MS
+        value: "300"
+      - key: MCP_ANALYSIS_DEPTH
+        value: "12"
+      - key: MCP_ANALYSIS_MAX_PLIES
+        value: "120"
+      - key: MCP_ANALYSIS_MAX_GAMES
+        value: "5"

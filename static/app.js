@@ -1,10 +1,6 @@
-const API_KEY_STORAGE_KEY = "chess-pgn-coach-openai-key";
 const PLAYED_AS_STORAGE_KEY = "chess-pgn-coach-played-as";
 const LAST_ANALYSIS_STORAGE_KEY = "chess-pgn-coach-last-analysis";
 
-const apiKeyPanelEl = document.getElementById("apiKeyPanel");
-const apiKeyEl = document.getElementById("apiKey");
-const apiKeySummaryEl = document.getElementById("apiKeySummary");
 const playedAsEl = document.getElementById("playedAs");
 const clearKeyBtn = document.getElementById("clearKeyBtn");
 const pgnEl = document.getElementById("pgn");
@@ -35,25 +31,10 @@ hydrateSavedSettings();
 restoreLastAnalysis();
 
 function hydrateSavedSettings() {
-  const savedKey = window.localStorage.getItem(API_KEY_STORAGE_KEY);
   const savedPlayedAs = window.localStorage.getItem(PLAYED_AS_STORAGE_KEY);
-  if (savedKey && apiKeyEl) {
-    apiKeyEl.value = savedKey;
-  }
   if (savedPlayedAs && playedAsEl) {
     playedAsEl.value = savedPlayedAs;
   }
-  updateApiKeySummary();
-}
-
-function updateApiKeySummary() {
-  if (!apiKeySummaryEl || !apiKeyPanelEl) {
-    return;
-  }
-  const value = apiKeyEl?.value.trim() || "";
-  const hasKey = Boolean(value);
-  apiKeySummaryEl.textContent = hasKey ? "Saved in this browser" : "Not added";
-  apiKeyPanelEl.open = !hasKey;
 }
 
 function persistLastAnalysis() {
@@ -291,7 +272,7 @@ function extractJsonObject(text) {
   return JSON.parse(candidate);
 }
 
-async function generateCoachingReport(game, apiKey, playedAs) {
+async function generateCoachingReport(game, playedAs) {
   const response = await fetch("/api/report", {
     method: "POST",
     headers: {
@@ -299,7 +280,6 @@ async function generateCoachingReport(game, apiKey, playedAs) {
     },
     body: JSON.stringify({
       analysis: game.analysis,
-      api_key: apiKey,
       played_as: playedAs,
     }),
   });
@@ -319,9 +299,6 @@ async function generateCoachingReport(game, apiKey, playedAs) {
 
 function setWorkingState(isWorking) {
   analyzeBtn.disabled = isWorking;
-  if (apiKeyEl) {
-    apiKeyEl.disabled = isWorking;
-  }
   if (playedAsEl) {
     playedAsEl.disabled = isWorking;
   }
@@ -370,32 +347,28 @@ gamePicker?.addEventListener("change", () => {
 });
 
 clearKeyBtn?.addEventListener("click", () => {
-  window.localStorage.removeItem(API_KEY_STORAGE_KEY);
   window.localStorage.removeItem(PLAYED_AS_STORAGE_KEY);
-  if (apiKeyEl) {
-    apiKeyEl.value = "";
-    apiKeyEl.focus();
-  }
+  window.localStorage.removeItem(LAST_ANALYSIS_STORAGE_KEY);
   if (playedAsEl) {
     playedAsEl.value = "White";
   }
-  updateApiKeySummary();
-  statusEl.textContent = "Saved API key and side preference cleared from this browser.";
-});
-
-apiKeyEl?.addEventListener("input", () => {
-  updateApiKeySummary();
+  pgnEl.value = "";
+  analyzedGames = [];
+  selectedGameIndex = 0;
+  replayFens = ["start"];
+  replayIndex = 0;
+  boardCard.hidden = true;
+  resultsCard.hidden = true;
+  if (gamePickerWrap) {
+    gamePickerWrap.hidden = true;
+  }
+  statusEl.textContent = "Saved session cleared from this browser.";
 });
 
 analyzeBtn.addEventListener("click", async () => {
-  const apiKey = apiKeyEl?.value.trim() || "";
   const playedAs = playedAsEl?.value || "";
   const pgn = pgnEl.value.trim();
 
-  if (!apiKey) {
-    statusEl.textContent = "Enter an OpenAI API key first.";
-    return;
-  }
   if (!playedAs) {
     statusEl.textContent = "Choose whether you played as White or Black.";
     return;
@@ -440,9 +413,7 @@ analyzeBtn.addEventListener("click", async () => {
       throw new Error("No analyzed games were returned.");
     }
 
-    window.localStorage.setItem(API_KEY_STORAGE_KEY, apiKey);
     window.localStorage.setItem(PLAYED_AS_STORAGE_KEY, playedAs);
-    updateApiKeySummary();
 
     statusEl.textContent = `Stockfish analysis complete. Generating coaching for ${playedAs}...`;
     setAnalysisMessage("Stockfish is walking the game tree...");
@@ -450,7 +421,7 @@ analyzeBtn.addEventListener("click", async () => {
     for (let idx = 0; idx < analyzedGames.length; idx += 1) {
       statusEl.textContent = `Generating coaching for game ${idx + 1} of ${analyzedGames.length} from ${playedAs}'s perspective...`;
       setAnalysisMessage(`Writing your coaching notes for game ${idx + 1} of ${analyzedGames.length}...`);
-      const result = await generateCoachingReport(analyzedGames[idx], apiKey, playedAs);
+      const result = await generateCoachingReport(analyzedGames[idx], playedAs);
       analyzedGames[idx].report = result.report;
       analyzedGames[idx].coachNotes = result.coachNotes;
     }

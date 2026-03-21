@@ -120,62 +120,6 @@ label {
   color: #3d4a5d;
 }
 
-.disclosure {
-  max-width: 560px;
-  margin: 18px auto 0;
-  border: 1px solid rgba(53, 64, 82, 0.1);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.72);
-  overflow: hidden;
-  text-align: left;
-}
-
-.disclosure[open] {
-  box-shadow: 0 14px 28px rgba(16, 24, 40, 0.08);
-}
-
-.disclosure-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 15px 16px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.disclosure-summary::-webkit-details-marker {
-  display: none;
-}
-
-.disclosure-title {
-  font-size: 0.9rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #3d4a5d;
-}
-
-.disclosure-value {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.disclosure-body {
-  padding: 0 16px 16px;
-  border-top: 1px solid rgba(53, 64, 82, 0.08);
-}
-
-.disclosure-body input {
-  margin-top: 14px;
-}
-
 select,
 input,
 textarea {

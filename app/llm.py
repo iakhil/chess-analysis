@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 from typing import Any
 
@@ -9,14 +10,15 @@ from openai import OpenAI
 logger = logging.getLogger(__name__)
 
 
-def build_coaching_report(analysis: dict[str, Any], api_key: str, model: str, played_as: str) -> str:
-    api_key = api_key.strip()
+def build_coaching_report(analysis: dict[str, Any], played_as: str) -> str:
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
     if not api_key:
         raise ValueError("OpenAI API key is missing")
     played_as = played_as.strip()
     if played_as not in {"White", "Black"}:
         raise ValueError("Played side must be White or Black")
 
+    model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
     client = OpenAI(api_key=api_key)
 
     prompt = (
